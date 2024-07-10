@@ -1,0 +1,319 @@
+From 5dc174ed85109470978cb0e7a34d9d787a466218 Mon Sep 17 00:00:00 2001
+From: Indra-13 <indushuchi@gmail.com>
+Date: Wed, 10 Jul 2024 21:49:06 +0530
+Subject: [PATCH 1/6] commit1 Update IState
+
+---
+ src/App.tsx | 75 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 75 insertions(+)
+ create mode 100644 src/App.tsx
+
+diff --git a/src/App.tsx b/src/App.tsx
+new file mode 100644
+index 0000000..0c3a4b1
+--- /dev/null
++++ b/src/App.tsx
+@@ -0,0 +1,75 @@
++import React, { Component } from 'react';
++import DataStreamer, { ServerRespond } from './DataStreamer';
++import Graph from './Graph';
++import './App.css';
++
++/**
++ * State declaration for <App />
++ */
++interface IState {
++  data: ServerRespond[],
++  showGraph: boolean,
++}
++
++/**
++ * The parent element of the react app.
++ * It renders title, button and Graph react element.
++ */
++class App extends Component<{}, IState> {
++  constructor(props: {}) {
++    super(props);
++
++    this.state = {
++      // data saves the server responds.
++      // We use this state to parse data down to the child element (Graph) as element property
++      data: [],
++    };
++  }
++
++  /**
++   * Render Graph react component with state.data parse as property data
++   */
++  renderGraph() {
++    return (<Graph data={this.state.data}/>)
++  }
++
++  /**
++   * Get new data from server and update the state with the new data
++   */
++  getDataFromServer() {
++    DataStreamer.getData((serverResponds: ServerRespond[]) => {
++      // Update the state by creating a new array of data that consists of
++      // Previous data in the state and the new data from server
++      this.setState({ data: [...this.state.data, ...serverResponds] });
++    });
++  }
++
++  /**
++   * Render the App react component
++   */
++  render() {
++    return (
++      <div className="App">
++        <header className="App-header">
++          Bank & Merge Co Task 2
++        </header>
++        <div className="App-content">
++          <button className="btn btn-primary Stream-button"
++            // when button is click, our react app tries to request
++            // new data from the server.
++            // As part of your task, update the getDataFromServer() function
++            // to keep requesting the data every 100ms until the app is closed
++            // or the server does not return anymore data.
++            onClick={() => {this.getDataFromServer()}}>
++            Start Streaming Data
++          </button>
++          <div className="Graph">
++            {this.renderGraph()}
++          </div>
++        </div>
++      </div>
++    )
++  }
++}
++
++export default App;
+-- 
+2.39.1.windows.1
+
+
+From 7bac40e973b4573eed6c664227ae47446d47164e Mon Sep 17 00:00:00 2001
+From: Indra-13 <indushuchi@gmail.com>
+Date: Wed, 10 Jul 2024 21:49:48 +0530
+Subject: [PATCH 2/6] commit2 Update App Component
+
+---
+ src/App.tsx | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/App.tsx b/src/App.tsx
+index 0c3a4b1..ba80837 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -23,6 +23,7 @@ class App extends Component<{}, IState> {
+       // data saves the server responds.
+       // We use this state to parse data down to the child element (Graph) as element property
+       data: [],
++      showGraph: false,
+     };
+   }
+ 
+-- 
+2.39.1.windows.1
+
+
+From 98699f988df0ef2c5049a2e4ec5d33ef12d4f273 Mon Sep 17 00:00:00 2001
+From: Indra-13 <indushuchi@gmail.com>
+Date: Wed, 10 Jul 2024 21:51:11 +0530
+Subject: [PATCH 3/6] commit3 Update renderGraph
+
+---
+ src/App.tsx | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/src/App.tsx b/src/App.tsx
+index ba80837..9dfe5c9 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -31,7 +31,10 @@ class App extends Component<{}, IState> {
+    * Render Graph react component with state.data parse as property data
+    */
+   renderGraph() {
+-    return (<Graph data={this.state.data}/>)
++    if (this.state.showGraph)
++    {  
++      return <Graph data={this.state.data} />;
++    }  
+   }
+ 
+   /**
+-- 
+2.39.1.windows.1
+
+
+From 5045545708b08b3ac070bcbcab5368a6f08a644e Mon Sep 17 00:00:00 2001
+From: Indra-13 <indushuchi@gmail.com>
+Date: Wed, 10 Jul 2024 21:52:19 +0530
+Subject: [PATCH 4/6] commit4 Update getDataFromServer
+
+---
+ src/App.tsx | 21 ++++++++++++++++-----
+ 1 file changed, 16 insertions(+), 5 deletions(-)
+
+diff --git a/src/App.tsx b/src/App.tsx
+index 9dfe5c9..f192ca5 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -41,11 +41,22 @@ class App extends Component<{}, IState> {
+    * Get new data from server and update the state with the new data
+    */
+   getDataFromServer() {
+-    DataStreamer.getData((serverResponds: ServerRespond[]) => {
+-      // Update the state by creating a new array of data that consists of
+-      // Previous data in the state and the new data from server
+-      this.setState({ data: [...this.state.data, ...serverResponds] });
+-    });
++    let x = 0;
++    const interval = setInterval(() => {
++      DataStreamer.getData((serverResponds: ServerRespond[]) => {
++        // Update the state by creating a new array of data that consists of
++        // Previous data in the state and the new data from server
++
++        this.setState({
++          data: serverResponds,
++          showGraph: true,
++        });
++      });
++      x++;
++      if (x > 1000) {
++        clearInterval(interval);
++      }
++    }, 100);
+   }
+ 
+   /**
+-- 
+2.39.1.windows.1
+
+
+From e9e28e69df5a4f4bcabe1b80269d005f9a2ffa8e Mon Sep 17 00:00:00 2001
+From: Indra-13 <indushuchi@gmail.com>
+Date: Wed, 10 Jul 2024 21:54:53 +0530
+Subject: [PATCH 5/6] commit5 extends HTMLElement
+
+---
+ src/Graph.tsx | 74 +++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 74 insertions(+)
+ create mode 100644 src/Graph.tsx
+
+diff --git a/src/Graph.tsx b/src/Graph.tsx
+new file mode 100644
+index 0000000..bb8a192
+--- /dev/null
++++ b/src/Graph.tsx
+@@ -0,0 +1,74 @@
++import React, { Component } from 'react';
++import { Table } from '@finos/perspective';
++import { ServerRespond } from './DataStreamer';
++import './Graph.css';
++
++/**
++ * Props declaration for <Graph />
++ */
++interface IProps {
++  data: ServerRespond[],
++
++}
++
++/**
++ * Perspective library adds load to HTMLElement prototype.
++ * This interface acts as a wrapper for Typescript compiler.
++ */
++interface PerspectiveViewerElement extends HTMLElement {
++  load: (table: Table) => void,
++}
++
++/**
++ * React component that renders Perspective based on data
++ * parsed from its parent through data property.
++ */
++class Graph extends Component<IProps, {}> {
++  // Perspective table
++  table: Table | undefined;
++
++  render() {
++    return React.createElement('perspective-viewer');
++  }
++
++  componentDidMount() {
++    // Get element to attach the table from the DOM.
++    const elem: PerspectiveViewerElement = document.getElementsByTagName('perspective-viewer')[0] as unknown as PerspectiveViewerElement;
++
++    const schema = {
++      stock: 'string',
++      top_ask_price: 'float',
++      top_bid_price: 'float',
++      timestamp: 'date',
++    };
++
++    if (window.perspective && window.perspective.worker()) {
++      this.table = window.perspective.worker().table(schema);
++    }
++    if (this.table) {
++      // Load the `table` in the `<perspective-viewer>` DOM reference.
++
++      // Add more Perspective configurations here.
++      elem.load(this.table);
++    }
++  }
++
++  componentDidUpdate() {
++    // Everytime the data props is updated, insert the data into Perspective table
++    if (this.table) {
++      // As part of the task, you need to fix the way we update the data props to
++      // avoid inserting duplicated entries into Perspective table again.
++      this.table.update(this.props.data.map((el: any) => {
++        // Format the data from ServerRespond to the schema
++        return {
++          stock: el.stock,
++          top_ask_price: el.top_ask && el.top_ask.price || 0,
++          top_bid_price: el.top_bid && el.top_bid.price || 0,
++          timestamp: el.timestamp,
++        };
++      }));
++    }
++  }
++}
++
++export default Graph;
+-- 
+2.39.1.windows.1
+
+
+From afabbb26f381ddbc9f8879687e96432764dd82b4 Mon Sep 17 00:00:00 2001
+From: Indra-13 <indushuchi@gmail.com>
+Date: Wed, 10 Jul 2024 21:55:58 +0530
+Subject: [PATCH 6/6] commit6 Update componentDidMount
+
+---
+ src/Graph.tsx | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/src/Graph.tsx b/src/Graph.tsx
+index bb8a192..cd8e0a5 100644
+--- a/src/Graph.tsx
++++ b/src/Graph.tsx
+@@ -50,6 +50,14 @@ class Graph extends Component<IProps, {}> {
+ 
+       // Add more Perspective configurations here.
+       elem.load(this.table);
++      elem.setAttribute("view", "y_line");
++      elem.setAttribute("column-pivots", '["stock"]');
++      elem.setAttribute("row-pivots", '["timestamp"]');
++      elem.setAttribute("columns", '["top_ask_price"]');
++      elem.setAttribute(
++        "aggregates",
++        '{"stock":"distinct count", "top_ask_price":"avg", "top_bid_price":"avg", "timestamp":"distinct count"}'
++      );
+     }
+   }
+ 
+-- 
+2.39.1.windows.1
+
